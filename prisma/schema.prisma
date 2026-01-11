@@ -1,0 +1,57 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider     = "prisma-client-js"
+  output       = "../generated/prisma/client"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+  // url      = env("DATABASE_URL")
+}
+
+model Admin {
+  id         Int          @id @default(autoincrement())
+  email      String       @unique
+  provider   AuthProvider
+  providerId String?
+  otpSecret  String?
+  otpEnabled Boolean      @default(false)
+  role       AdminRole    @default(ADMIN)
+  sessions   Session[]
+  auditLogs  AuditLog[]
+}
+
+model Session {
+  id          String   @id @default(uuid())
+  adminId     Int
+  refreshHash String
+  userAgent   String
+  ip          String
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+  admin       Admin    @relation(fields: [adminId], references: [id])
+}
+
+model AuditLog {
+  id        Int      @id @default(autoincrement())
+  adminId   Int
+  action    String
+  target    String?
+  ip        String
+  createdAt DateTime @default(now())
+  admin     Admin    @relation(fields: [adminId], references: [id])
+}
+
+enum AdminRole {
+  SUPER_ADMIN
+  ADMIN
+}
+
+enum AuthProvider {
+  LOCAL
+  GOOGLE
+  GITHUB
+}
